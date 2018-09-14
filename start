@@ -1,0 +1,51 @@
+#!/bin/bash
+:<<!
+2017 09 21 
+cloud
+Change the way of execution
+!
+# Add script runtime environment 
+BASEPATH=$(cd `dirname $0`; pwd)
+PYTHONPATH=$BASEPATH/bin/cdh-python2.7/bin
+PATH=$BASEPATH/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+export PATH
+
+#deploy python2.7
+if [ ! -f "$BASEPATH/bin/cdh-python2.7/bin/python2.7" ]; then  
+  rm -rf $BASEPATH/bin/cdh-python2.7
+  /bin/tar -zxvf ./env/cdh-python2.7.tar.gz -C $BASEPATH/bin >/dev/null
+fi
+
+#deploy selenium driver(phantomjs)
+#if [ ! -f '/usr/bin/phantomjs' ]; then  
+#  /bin/cp ./env/selenium/phantomjs /usr/bin/
+#  chmod +x /usr/bin/phantomjs
+#fi
+
+#deploy script
+if [ $1 == 'hive_mysqldb_deploy' ]; then
+  $PYTHONPATH/python2.7 installer/configure.py hive_mysqldb_deploy
+elif [ $1 == 'cm_command_deploy' ]; then
+  $PYTHONPATH/python2.7 installer/configure.py cm_command_deploy
+elif [ $1 == 'cm_install' ]; then
+  $PYTHONPATH/python2.7 installer/cm_installer-cdh-cdh-5.11.1-b16.py
+elif [ $1 == 'cluster_deploy' ]; then
+  $PYTHONPATH/python2.7 installer/cluster_deploy-cdh-5.11.1-b08.py
+elif [ $1 == 'auto_deploy' ]; then
+  $PYTHONPATH/python2.7 installer/cm_installer-cdh-cdh-5.11.1-b16.py
+  if [ $? == 0 ]; then
+    $PYTHONPATH/python2.7 installer/cluster_deploy-cdh-5.11.1-b08.py
+    if [ $? == 0 ];then 
+      $PYTHONPATH/python2.7 installer/configure.py write_cluster_info
+    fi
+  fi
+else
+  echo "Please make sure the positon variable is [hive_mysqldb_deploy,cm_command_deploy,cm_install,cluster_deploy,auto_deploy]."
+fi
+
+#remove broswer log file
+#rm -f ghostdriver.log
+
+#remove python environment
+rm -rf PYTHONPATH=$BASEPATH/bin/cdh-python2.7
+
